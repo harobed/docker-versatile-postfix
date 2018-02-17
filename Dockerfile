@@ -36,7 +36,8 @@ RUN echo "pwcheck_method: saslauthd" > /etc/postfix/sasl/smtpd.conf; \
     echo "saslauthd_path: /var/run/saslauthd/mux" >> /etc/postfix/sasl/smtpd.conf
 
 # postfix settings
-RUN postconf -e smtpd_sasl_auth_enable="yes"; \
+RUN postconf -e inet_protocols="ipv4"; \
+    postconf -e smtpd_sasl_auth_enable="yes"; \
     postconf -e smtp_tls_security_level="may"; \
     postconf -e smtpd_recipient_restrictions="permit_mynetworks permit_sasl_authenticated reject_unauth_destination"; \
     postconf -e smtpd_helo_restrictions="permit_sasl_authenticated, permit_mynetworks, reject_invalid_hostname, reject_unauth_pipelining, reject_non_fqdn_hostname"
@@ -50,6 +51,7 @@ RUN sed -i 's/^OPTIONS=/#OPTIONS=/g' /etc/default/saslauthd; \
 
 # dkim settings
 RUN mkdir -p /etc/postfix/dkim
+RUN echo "LogWhy yes" >> /etc/opendkim.conf
 RUN echo "Include /etc/opendkim/custom.conf" >> /etc/opendkim.conf
 RUN mkdir -p /etc/opendkim/
 
@@ -66,6 +68,7 @@ ADD startup.sh /opt/startup.sh
 RUN chmod a+x /opt/startup.sh
 
 ENV DKIM_SELECTOR=mail
+#ENV CONTENT_FILTER=postfix-content-filter-logging:10025
 
 # Docker startup
 ENTRYPOINT ["/opt/startup.sh"]

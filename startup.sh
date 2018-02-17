@@ -76,19 +76,19 @@ fi
 if [ -z ${DISABLE_DKIM+x} ]
 then
   echo ">> enable DKIM support"
-  
+
   if [ -z ${DKIM_CANONICALIZATION+x} ]
   then
     DKIM_CANONICALIZATION="simple"
   fi
-  
+
   echo "Canonicalization $DKIM_CANONICALIZATION" >> /etc/opendkim.conf
-  
+
   postconf -e milter_default_action="accept"
   postconf -e milter_protocol="2"
   postconf -e smtpd_milters="inet:localhost:8891"
   postconf -e non_smtpd_milters="inet:localhost:8891"
-  
+
   # add dkim if necessary
   if [ ! -f /etc/postfix/dkim/dkim.key ]
   then
@@ -104,6 +104,26 @@ then
   chown -R opendkim:opendkim /etc/postfix/dkim/
   chmod -R o-rwX /etc/postfix/dkim/
   chmod o=- /etc/postfix/dkim/dkim.key
+fi
+
+echo "Content filter : ${CONTENT_FILTER}"
+if [ ! -z ${CONTENT_FILTER} ]
+then
+  echo ">> Enable content_filter"
+  echo "postconf -e content_filter=\"scan:${CONTENT_FILTER}\""
+  postconf -e content_filter="scan:${CONTENT_FILTER}"
+
+  cat <<EOF >> /etc/postfix/master.cf
+scan      unix  -       -       n       -       10      smtp
+    -o smtp_send_xforward_command=yes
+    -o disable_mime_output_conversion=yes
+
+0.0.0.0:10026 inet  n       -       n       -       10      smtpd
+    -o mynetworks=0.0.0.0/0
+    -o content_filter=
+    -o receive_override_options=no_unknown_recipient_checks,no_header_body_checks,no_address_mappings
+    -o smtpd_authorized_xforward_hosts=0.0.0.0/0
+EOF
 fi
 
 # Configure /etc/opendkim/custom.conf file

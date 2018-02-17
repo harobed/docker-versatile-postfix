@@ -28,6 +28,8 @@ View in GitHub [MarvAmBass/docker-versatile-postfix](https://github.com/MarvAmBa
  * default: `simple` - can be either `relaxed` or `simple`
 * `DKIM_SELECTOR`
  * default: `mail`, you can customize DKIM selector name
+* `CONTENT_FILTER`
+ * optional, no default, example usage: `postfix-content-filter-logging:10025`
 
 
 ## Running the Mailserver
